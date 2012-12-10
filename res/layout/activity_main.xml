@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/hello" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+        
+        <Button
+            android:id="@+id/btActWitness"
+            android:layout_width="110dp"
+            android:layout_height="35dp"
+            android:text="@string/btActWitness" />
+
+        <Button
+            android:id="@+id/btDisable"
+            android:layout_width="110dp"
+            android:layout_height="35dp"
+            android:text="@string/btDisable" />
+
+    </LinearLayout>
+    
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <Button
+            android:id="@+id/btReqProof"
+            android:layout_width="110dp"
+            android:layout_height="35dp"
+            android:text="@string/btReqProof" />
+
+        <Button
+            android:id="@+id/btVldProof"
+            android:layout_width="110dp"
+            android:layout_height="35dp"
+            android:text="@string/btVldProof" />
+
+    </LinearLayout>
+
+    <ScrollView 
+			android:id="@+id/svStatus"
+        	android:layout_width="match_parent" 
+	        android:layout_height="wrap_content">
+	        <TextView 
+	            android:id="@+id/tvStatus"
+	            android:layout_width="match_parent" 
+	            android:layout_height="wrap_content"
+	            android:singleLine="false" 
+	            android:text="@string/defaulttext">
+	            <requestFocus />
+	        </TextView>
+    </ScrollView>
+
+</LinearLayout>
