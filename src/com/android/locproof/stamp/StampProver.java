@@ -57,7 +57,7 @@ public class StampProver extends BluetoothEntities{
      */
     public void startSM(){
     	if(getSMState() == PROVER_S_INIT){
-    		mStampContext = new ProverContext();
+    		mStampContext = new ProverContext(mContext);
     		mStampEPRecord = new StampEPRecord(mStampContext, mContext);
     		addSMTask(new moveSM(PROVER_S_INQUIRY,null));
     	}
