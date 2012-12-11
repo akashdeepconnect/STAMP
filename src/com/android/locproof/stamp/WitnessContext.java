@@ -12,6 +12,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.Date;
 
+import android.content.Context;
 import android.location.Location;
 
 /**
@@ -37,16 +38,16 @@ public class WitnessContext {
 	 * Constructor 
 	 * @param aID entity's ID
 	 */
-	public WitnessContext(){
+	public WitnessContext(Context aContext){
 		//Initialize keys
-		initKeys();
+		initKeys(aContext);
 		
 		// Prepare a randomW 
 		randomW = CryptoUtil.getRandomSecureNumber();
 	}
 		
-	private void initKeys() {
-		Keys.initKeys();
+	private void initKeys(Context aContext) {
+		Keys.initKeys(aContext);
 		try {
 			setSelfDSAPubKey(Keys.MY_DSA_PUP_KEY);
 			setSelfDSAPriKey(Keys.MY_DSA_PRI_KEY);
