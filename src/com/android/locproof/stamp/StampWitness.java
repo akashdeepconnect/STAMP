@@ -97,7 +97,7 @@ public class StampWitness extends BluetoothEntities{
 	    	case WITNESS_S_CONNECTED: 
 	    		switch(oldSMState){
 	    			case WITNESS_S_LISTENING:
-	    				mStampContext = new WitnessContext(mContext);
+	    				mStampContext = new WitnessContext();
 	    				printTransition(oldSMState, newSMState, true, false);
 	    				break;
 	    			default:
