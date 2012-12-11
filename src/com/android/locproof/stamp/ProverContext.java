@@ -10,6 +10,8 @@ import java.security.interfaces.DSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Date;
 
+import android.content.Context;
+
 /**
  * Context information associated with each proof operation
  */
@@ -32,16 +34,16 @@ public class ProverContext {
 	
 	/**
 	 * Constructor 
-	 * @param aID entity's ID
+	 * @param aContext application's context
 	 */
-	public ProverContext(){
+	public ProverContext(Context aContext){
 		//Initialize keys
-		initKeys();
+		initKeys(aContext);
 		
 		// Generate rp and prepare committed ID
 		randomP = CryptoUtil.getRandomSecureNumber();
 		try {
-			mCommittedID = CryptoUtil.getCommitment(getPubDSASelf().toString().getBytes(), randomP).toByteArray();
+			mCommittedID = CryptoUtil.getCommitment(getPubDSASelf().getEncoded(), randomP).toByteArray();
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		} catch (UnsupportedEncodingException e) {
@@ -54,8 +56,8 @@ public class ProverContext {
 		PrepareDB();
 	}
 	
-	private void initKeys() {
-		Keys.initKeys();
+	private void initKeys(Context aContext) {
+		Keys.initKeys(aContext);
 		try {
 			setSelfDSAPubKey(Keys.MY_DSA_PUP_KEY);
 			setSelfDSAPriKey(Keys.MY_DSA_PRI_KEY);
