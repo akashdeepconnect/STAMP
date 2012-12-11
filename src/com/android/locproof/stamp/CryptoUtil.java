@@ -21,6 +21,7 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.DSAPrivateKeySpec;
 import java.security.spec.DSAPublicKeySpec;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -152,7 +153,7 @@ public class CryptoUtil {
 	}
 	
 	public static DSAPrivateKey getDSAPriKeyfromEncoded(byte[] encKey) throws NoSuchAlgorithmException, InvalidKeySpecException{
-		X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(encKey);
+		PKCS8EncodedKeySpec pubKeySpec = new PKCS8EncodedKeySpec(encKey);
 		KeyFactory kf= KeyFactory.getInstance("DSA");
 		return (DSAPrivateKey) kf.generatePrivate(pubKeySpec);
 	}
@@ -214,7 +215,7 @@ public class CryptoUtil {
 	}
 	
 	public static RSAPrivateKey getRSAPriKeyfromEncoded(byte[] encKey) throws NoSuchAlgorithmException, InvalidKeySpecException{
-		X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(encKey);
+		PKCS8EncodedKeySpec pubKeySpec = new PKCS8EncodedKeySpec(encKey);
 		KeyFactory kf= KeyFactory.getInstance("RSA");
 		return (RSAPrivateKey) kf.generatePrivate(pubKeySpec);
 	}
