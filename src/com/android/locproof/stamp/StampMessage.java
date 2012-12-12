@@ -105,7 +105,7 @@ public class StampMessage {
 		byte[] time = array.get(1);
 		aStampContext.setRemoteTime(time);
 		
-		byte[] location = new byte[2];
+		byte[] location = array.get(2);
 		aStampContext.setRemoteLocation(location);
 	}
 
