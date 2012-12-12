@@ -24,7 +24,7 @@ public abstract class BluetoothEntities {
 	/* STAMP Messages
 	 * 0---------2----3----5--------      
 	 * |0x0A 0x0B|TYPE|SIZE|PAYLOAD| */
-	public static final int MESSAGE_HEADER_LEN		= 5;
+	public static final int MESSAGE_HEADER_LEN		= 7;
 	public static final byte MESSAGE_STAMP_BYTE1	= 0x0A;
 	public static final byte MESSAGE_STAMP_BYTE2	= 0x0B;
 	public static final byte MESSAGE_PREQ			= 0x01;

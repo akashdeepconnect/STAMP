@@ -504,7 +504,7 @@ public class BluetoothService {
 
         public void run() {
             Log.i(TAG, "BEGIN mConnectedThread");
-            byte[] buffer = new byte[2048];
+            byte[] buffer = new byte[40960];
             int bytes;
             
             /* Connection is active, notify caller */
@@ -543,6 +543,7 @@ public class BluetoothService {
         public void write(byte[] buffer, byte type) {
             try {
                 mmOutStream.write(buffer);
+                mmOutStream.flush();
                 
                 /* Notify caller the send is completed */
                 Bundle sent = new Bundle();

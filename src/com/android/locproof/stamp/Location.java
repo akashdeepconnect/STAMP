@@ -15,6 +15,7 @@ public class Location {
 		this._latitude  = latitude;
 		this._longitude = longitude;
 		
+		_levels = new LinkedList<String>();
 		// Hard coded for now
 		_levels.add(name);
 		_levels.add("Neighborhood");

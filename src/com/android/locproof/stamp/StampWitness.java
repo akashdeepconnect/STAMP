@@ -20,6 +20,9 @@ public class StampWitness extends BluetoothEntities{
     
     private static final String ID = "StampWitness";
     private WitnessContext mStampContext;
+    private byte[] assembleBuffer = null;
+    private int bytesRead = 0;
+    private int packetSize = 0;
     
     private Context mContext;
     private Handler mHandler;
@@ -165,15 +168,15 @@ public class StampWitness extends BluetoothEntities{
 	 */
     private void sendMessage(byte messageType){
     	byte mWriteBuf[];
-    	byte header[] = {0x0A, 0x0B, messageType, 0x00, 0x00};
+    	byte header[] = {0x0A, 0x0B, messageType, 0x00, 0x00, 0x00, 0x00};
     	byte payload[] = null;
-    	short size = 0;		// size cannot be that large can it? 
+    	int size = 0;		// size cannot be that large can it? 
     	
     	switch(messageType){
     		case MESSAGE_DBSTART:
     			payload = StampMessage.createDBStart();
-    			size = (short) payload.length;
-    			System.arraycopy(ByteBuffer.allocate(2).putShort(size).array(), 0, header, 3, 2);
+    			size = payload.length;
+    			System.arraycopy(ByteBuffer.allocate(4).putInt(size).array(), 0, header, 3, 4);
     			mWriteBuf = new byte[header.length + size];
     			System.arraycopy(header, 0, mWriteBuf, 0, header.length);
     			System.arraycopy(payload, 0, mWriteBuf, header.length, size);
@@ -181,8 +184,8 @@ public class StampWitness extends BluetoothEntities{
     			break;
     		case MESSAGE_EP:
     			payload = StampMessage.createEP(mStampContext);
-    			size = (short) payload.length;
-    			System.arraycopy(ByteBuffer.allocate(2).putShort(size).array(), 0, header, 3, 2);
+    			size = payload.length;
+    			System.arraycopy(ByteBuffer.allocate(4).putInt(size).array(), 0, header, 3, 4);
     			mWriteBuf = new byte[header.length + size];
     			System.arraycopy(header, 0, mWriteBuf, 0, header.length);
     			System.arraycopy(payload, 0, mWriteBuf, header.length, size);
@@ -209,17 +212,81 @@ public class StampWitness extends BluetoothEntities{
     	int msgStart = 0;
     	byte header[];
     	byte payload[];
-    	short size = 0;
+    	int size = 0;
+    	int bytesRcvd;
     	
     	Bundle bundle; 
     	
-    	while(remainSize > 0){
-    		if(remainSize > MESSAGE_HEADER_LEN){
-    			header = new byte[MESSAGE_HEADER_LEN]; 
-    			System.arraycopy(message, msgStart, header, 0, MESSAGE_HEADER_LEN);
-    			size = ByteBuffer.wrap(header, 3, 2).getShort();
-    			payload = new byte[size];
-    			System.arraycopy(message, msgStart+MESSAGE_HEADER_LEN, payload, 0, size);
+    	if(assembleBuffer == null){
+    		/* new packet */
+    		while(remainSize > 0){
+    			if(remainSize > MESSAGE_HEADER_LEN){
+    				/* copy header in */
+    				header = new byte[MESSAGE_HEADER_LEN];
+    				System.arraycopy(message, msgStart, header, 0, MESSAGE_HEADER_LEN);
+    				bytesRcvd = message.length - MESSAGE_HEADER_LEN;	// rcvd payload size
+    				/* check packet size */
+    				size = ByteBuffer.wrap(header, 3, 4).getInt();
+    				packetSize = size;					// total payload size
+    				if(bytesRcvd < size){
+    					/* incomplete, save payload into assemble buffer */
+    					assembleBuffer = new byte[40960];
+    					bytesRead = 0;
+    					System.arraycopy(message, msgStart, 
+    							assembleBuffer, bytesRead, message.length);
+    					bytesRead += message.length;
+    					/* finish this buffer read, wait for next fragment */
+    					break;
+    				}else{
+    					/* bytesRcvd >= size? normal case */
+    					payload = new byte[packetSize];
+    	    			System.arraycopy(message, msgStart+MESSAGE_HEADER_LEN, payload, 0, packetSize);
+    	    			if((header[0]==MESSAGE_STAMP_BYTE1)&&(header[1]==MESSAGE_STAMP_BYTE2)){
+    	    				switch(header[2]){
+    		    				case MESSAGE_PREQ:
+    			    				/* send notification */
+    			    				printRemoteMessage(remote[1], MESSAGE_PREQ);
+    			    				/* wrap payload */
+    			    				bundle = new Bundle();
+    			    				bundle.putByteArray(RCVD_MESSAGE, payload);
+    			    				addSMTask(new moveSM(WITNESS_S_PREQ_RCVD,bundle));
+    			    				break;
+    			    			case MESSAGE_CECK:
+    			    				printRemoteMessage(remote[1], MESSAGE_CECK);
+    			    				/* wrap payload */
+    			    				bundle = new Bundle();
+    			    				bundle.putByteArray(RCVD_MESSAGE, payload);
+    			    				addSMTask(new moveSM(WITNESS_S_DB_SUCCESS,bundle));
+    			    				break;
+    		    				default:
+    		    					break;
+    	    				}
+    	    			}
+    	    			if(D){
+    	    				Log.d(TAG, "Message "+header[2]+": "+size+" bytes received");
+    	    				Log.d(TAG, new String(payload));
+    	    			}
+    				}
+    			}
+    			msgStart = msgStart + MESSAGE_HEADER_LEN + size;
+        		remainSize -= msgStart;
+    		}
+    	}else{
+    		if((remainSize+bytesRead-MESSAGE_HEADER_LEN) < packetSize){
+    			/* all payload belongs to previous incomplete packet */
+    			System.arraycopy(message, msgStart, 
+						assembleBuffer, bytesRead, remainSize);
+    			bytesRead += remainSize;
+    		}else{
+    			/* previous packet receive complete, but may be with new packet */
+    			System.arraycopy(message, msgStart, 
+						assembleBuffer, bytesRead, packetSize+MESSAGE_HEADER_LEN-bytesRead);
+    			Log.d("TAG", "packet size: "+packetSize+" bytesREad: "+bytesRead+" remain: "+remainSize);
+    			/* start normal processing on assemble Buffer*/
+    			header = new byte[MESSAGE_HEADER_LEN];
+				System.arraycopy(assembleBuffer, 0, header, 0, MESSAGE_HEADER_LEN);
+    			payload = new byte[packetSize];
+    			System.arraycopy(assembleBuffer, MESSAGE_HEADER_LEN, payload, 0, packetSize);
     			if((header[0]==MESSAGE_STAMP_BYTE1)&&(header[1]==MESSAGE_STAMP_BYTE2)){
     				switch(header[2]){
 	    				case MESSAGE_PREQ:
@@ -242,13 +309,105 @@ public class StampWitness extends BluetoothEntities{
     				}
     			}
     			if(D){
-    				Log.d(TAG, "Message "+header[2]+": "+size+" bytes received");
+    				Log.d(TAG, "Assemble Message "+header[2]+": "+packetSize+" bytes received");
     				Log.d(TAG, new String(payload));
     			}
+
+    			remainSize = remainSize - (packetSize+MESSAGE_HEADER_LEN-bytesRead);
+    			/* clear assemble buffer*/
+    			assembleBuffer = null;
+    			bytesRead = 0;
+    			while(remainSize>0){
+    				if(remainSize > MESSAGE_HEADER_LEN){
+        				/* copy header in */
+        				header = new byte[MESSAGE_HEADER_LEN];
+        				System.arraycopy(message, msgStart, header, 0, MESSAGE_HEADER_LEN);
+        				bytesRcvd = message.length - MESSAGE_HEADER_LEN;	// rcvd payload size
+        				/* check packet size */
+        				size = ByteBuffer.wrap(header, 3, 4).getInt();
+        				packetSize = size;					// total payload size
+        				if(bytesRcvd < size){
+        					/* incomplete, save payload into assemble buffer */
+        					assembleBuffer = new byte[40960];
+        					bytesRead = 0;
+        					System.arraycopy(message, msgStart, 
+        							assembleBuffer, bytesRead, message.length);
+        					bytesRead += message.length;
+        					/* finish this buffer read, wait for next fragment */
+        					break;
+        				}else{
+        					/* bytesRcvd >= size? normal case */
+        					payload = new byte[packetSize];
+        	    			System.arraycopy(message, msgStart+MESSAGE_HEADER_LEN, payload, 0, packetSize);
+        	    			if((header[0]==MESSAGE_STAMP_BYTE1)&&(header[1]==MESSAGE_STAMP_BYTE2)){
+        	    				switch(header[2]){
+        		    				case MESSAGE_PREQ:
+        			    				/* send notification */
+        			    				printRemoteMessage(remote[1], MESSAGE_PREQ);
+        			    				/* wrap payload */
+        			    				bundle = new Bundle();
+        			    				bundle.putByteArray(RCVD_MESSAGE, payload);
+        			    				addSMTask(new moveSM(WITNESS_S_PREQ_RCVD,bundle));
+        			    				break;
+        			    			case MESSAGE_CECK:
+        			    				printRemoteMessage(remote[1], MESSAGE_CECK);
+        			    				/* wrap payload */
+        			    				bundle = new Bundle();
+        			    				bundle.putByteArray(RCVD_MESSAGE, payload);
+        			    				addSMTask(new moveSM(WITNESS_S_DB_SUCCESS,bundle));
+        			    				break;
+        		    				default:
+        		    					break;
+        	    				}
+        	    			}
+        	    			if(D){
+        	    				Log.d(TAG, "Message "+header[2]+": "+size+" bytes received");
+        	    				Log.d(TAG, new String(payload));
+        	    			}
+        				}
+        			}
+    				msgStart = msgStart + MESSAGE_HEADER_LEN + size;
+    	    		remainSize -= msgStart;
+    			}
     		}
-    		msgStart = msgStart + MESSAGE_HEADER_LEN + size;
-    		remainSize -= msgStart;
     	}
+    	
+//    	while(remainSize > 0){
+//    		if(remainSize > MESSAGE_HEADER_LEN){
+//    			header = new byte[MESSAGE_HEADER_LEN]; 
+//    			System.arraycopy(message, msgStart, header, 0, MESSAGE_HEADER_LEN);
+//    			size = ByteBuffer.wrap(header, 3, 4).getInt();
+//    			payload = new byte[size];
+//    			System.arraycopy(message, msgStart+MESSAGE_HEADER_LEN, payload, 0, size);
+//    			if((header[0]==MESSAGE_STAMP_BYTE1)&&(header[1]==MESSAGE_STAMP_BYTE2)){
+//    				switch(header[2]){
+//	    				case MESSAGE_PREQ:
+//		    				/* send notification */
+//		    				printRemoteMessage(remote[1], MESSAGE_PREQ);
+//		    				/* wrap payload */
+//		    				bundle = new Bundle();
+//		    				bundle.putByteArray(RCVD_MESSAGE, payload);
+//		    				addSMTask(new moveSM(WITNESS_S_PREQ_RCVD,bundle));
+//		    				break;
+//		    			case MESSAGE_CECK:
+//		    				printRemoteMessage(remote[1], MESSAGE_CECK);
+//		    				/* wrap payload */
+//		    				bundle = new Bundle();
+//		    				bundle.putByteArray(RCVD_MESSAGE, payload);
+//		    				addSMTask(new moveSM(WITNESS_S_DB_SUCCESS,bundle));
+//		    				break;
+//	    				default:
+//	    					break;
+//    				}
+//    			}
+//    			if(D){
+//    				Log.d(TAG, "Message "+header[2]+": "+size+" bytes received");
+//    				Log.d(TAG, new String(payload));
+//    			}
+//    		}
+//    		msgStart = msgStart + MESSAGE_HEADER_LEN + size;
+//    		remainSize -= msgStart;
+//    	}
     }
     
     /**
