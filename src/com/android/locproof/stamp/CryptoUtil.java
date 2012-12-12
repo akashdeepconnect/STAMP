@@ -2,6 +2,7 @@ package com.android.locproof.stamp;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -368,19 +369,22 @@ public class CryptoUtil {
 
 
 	/*ZK proof*/
-	public static BigInteger getZ(ArrayList<byte[]> c1, ArrayList<byte[]> c2){
+	public static BigInteger getZ(ArrayList<byte[]> c1, ArrayList<byte[]> c2, BigInteger p){
 		BigInteger z = BigInteger.ZERO;
 		
-		if(c1.size() != c2.size()){
-			return z; 
+		//TODO: make sure c1 and c2 are of the same size
+		int size = c1.size();
+		if(size > c2.size()){
+			size = c2.size();
 		}
 		
-		for(int i=0; i<c1.size(); i++){
+		for(int i=0; i<size; i++){
 			BigInteger c1BI = new BigInteger(1, c1.get(i));
 			BigInteger c2BI = new BigInteger(1, c2.get(i));
-			z = z.add(c1BI.multiply(c2BI).pow((int) Math.pow(2, i)));
+			BigInteger exp = new BigInteger(1, ByteBuffer.allocate(8).putLong((long) Math.pow(2, i)).array());
+			
+			z = z.add((c1BI.multiply(c2BI)).modPow(exp, p));
 		}
-		return z;
+		return z.mod(p);
 	}
-
 }

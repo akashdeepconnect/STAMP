@@ -130,7 +130,7 @@ public class StampMessage {
 		ArrayList<byte[]> cks = MessageUtil.parseMessages(ceck.get(1));
 		
 		// obtain z
-		BigInteger z = CryptoUtil.getZ(ces, cks);
+		BigInteger z = CryptoUtil.getZ(ces, cks, aStampContext.getPubDSASelf().getParams().getP());
 		aStampContext.setRemoteZ(z);
 	}
 	

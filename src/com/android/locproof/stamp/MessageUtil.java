@@ -15,17 +15,17 @@ public class MessageUtil {
 		int bufferSize = 0;
 		for(int i = 0; i< array.size(); i++){
 			byte[] thisByte = array.get(i);
-			bufferSize += (2+thisByte.length);
+			bufferSize += (4+thisByte.length);
 		}
 		
 		byte[] buffer = new byte[bufferSize];
 		
 		int pointer = 0;	// used to index the next empty byte to fill
 		for(int i = 0; i< array.size(); i++){
-			Short thisSize = (short) array.get(i).length;
-			System.arraycopy(ByteBuffer.allocate(2).putShort(thisSize).array(), 0, buffer, pointer, 2);
-			System.arraycopy(array.get(i), 0, buffer, pointer+2, thisSize);
-			pointer += (2+thisSize);
+			int thisSize = array.get(i).length;
+			System.arraycopy(ByteBuffer.allocate(4).putInt(thisSize).array(), 0, buffer, pointer, 4);
+			System.arraycopy(array.get(i), 0, buffer, pointer+4, thisSize);
+			pointer += (4+thisSize);
 		}
 		
 		return buffer;
@@ -55,8 +55,8 @@ public class MessageUtil {
 	 */
 	public static byte[] createMessageFromArray(ArrayList<byte[]>  array){
 		
-		byte[] buffer1 = new byte[2];
-		System.arraycopy(ByteBuffer.allocate(2).putShort((short) array.size()).array(), 0, buffer1, 0, 2);
+		byte[] buffer1 = new byte[4];
+		System.arraycopy(ByteBuffer.allocate(4).putInt(array.size()).array(), 0, buffer1, 0, 4);
 		
 		byte[] buffer2 = compileMessages(array);
 		
@@ -70,19 +70,20 @@ public class MessageUtil {
 		int pointer = 0; // used to index the next byte to read
 		
 		for (int i= 0; i< msgCount; i++){
-			short thisSize = ByteBuffer.wrap(origMsg, pointer, 2).getShort();
+			int thisSize = ByteBuffer.wrap(origMsg, pointer, 4).getInt();
 			byte[] b = new byte[thisSize];
-			b = ByteBuffer.wrap(origMsg, pointer+2, thisSize).array();
+			System.arraycopy(origMsg, pointer+4, b, 0, thisSize);
 			array.add(b);
-			pointer += (2+thisSize);
+			pointer += (4+thisSize);
 		}
 		return array;
 	}
 	
 	public static ArrayList<byte[]> parseMessages(byte[] origMsg){
 		
-		short msgCount = ByteBuffer.wrap(origMsg, 0, 2).getShort();
-		byte[] newMsg = ByteBuffer.wrap(origMsg, 2, origMsg.length).array();
+		int msgCount = ByteBuffer.wrap(origMsg, 0, 4).getInt();
+		byte[] newMsg = new byte[origMsg.length-4];
+		System.arraycopy(origMsg, 4, newMsg, 0, origMsg.length-4);
 		
 		return parseMessage(newMsg, msgCount);
 	}
