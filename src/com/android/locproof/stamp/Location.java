@@ -6,7 +6,7 @@ public class Location {
 	private String _name;
 	private double _longitude;
 	private double _latitude;
-	private LinkedList<String> _levels;
+	private LinkedList<String> _levels = new LinkedList<String>();
 
 	// create and initialize a point with given name and
 	// (latitude, longitude) specified in degrees
@@ -15,14 +15,7 @@ public class Location {
 		this._latitude  = latitude;
 		this._longitude = longitude;
 		
-		_levels = new LinkedList<String>();
-		// Hard coded for now
-		_levels.add(name);
-		_levels.add("Neighborhood");
-		_levels.add("Town/City");
-		_levels.add("Region/County");
-		_levels.add("State");
-		_levels.add("County");
+		initLevels(name);
 	}
 	
 	public Location(String locString) {
@@ -33,6 +26,18 @@ public class Location {
 		this._name = name;
 		this._latitude  = Double.valueOf(latString);
 		this._longitude = Double.valueOf(longString);
+		
+		initLevels(name);
+	}
+	
+	public void initLevels(String name){
+		// Hard coded for now
+		_levels.add(name);
+		_levels.add("Neighborhood");
+		_levels.add("Town/City");
+		_levels.add("Region/County");
+		_levels.add("State");
+		_levels.add("County");
 	}
 
 	public String getLevel(int index){
