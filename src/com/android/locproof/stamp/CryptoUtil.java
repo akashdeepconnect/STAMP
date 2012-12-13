@@ -4,6 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -30,7 +31,10 @@ import java.util.LinkedList;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * @author Oscar
@@ -194,6 +198,26 @@ public class CryptoUtil {
 	}
 
 	// RSA operations
+	
+	public static SecretKey generateAESKey(int keySize) throws NoSuchAlgorithmException {
+		KeyGenerator kgen = KeyGenerator.getInstance("AES");  
+	    kgen.init(128); // 192 and 256 bits may not be available  
+	       
+	    return kgen.generateKey();  
+	}
+	
+	public static byte[] encryptAES(SecretKey sKey, byte[] message) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+		Cipher c = Cipher.getInstance("AES");
+        c.init(Cipher.ENCRYPT_MODE, sKey);
+        return c.doFinal(message);
+	}
+	
+	public static byte[] decryptAES(SecretKey sKey, byte[] message) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+		Cipher c = Cipher.getInstance("AES");
+        c.init(Cipher.DECRYPT_MODE, sKey);
+        return c.doFinal(message);
+	}
+
 
 	/**
 	 * Generation of a RSA key pair
@@ -256,6 +280,10 @@ public class CryptoUtil {
 
 		return cipher.doFinal(message);
 	}
+	
+	// AES symmetric key opertations
+	
+	
 
 	// String commitment
 	// http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.57.2794	

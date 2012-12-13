@@ -1,6 +1,7 @@
 package com.android.locproof.stamp;
 
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Array;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
@@ -12,6 +13,9 @@ import java.util.LinkedList;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+
+import android.os.Messenger;
 
 /**
  * Handlers for stamp message processing
@@ -157,8 +161,13 @@ public class StampMessage {
 	 * @param aStampContext current context
 	 * @param aProof proof
 	 * @return endorsed proof
+	 * @throws NoSuchAlgorithmException 
+	 * @throws BadPaddingException 
+	 * @throws IllegalBlockSizeException 
+	 * @throws NoSuchPaddingException 
+	 * @throws InvalidKeyException 
 	 */
-	private static byte[] endorseP(WitnessContext aStampContext, byte aProof[]){
+	private static byte[] endorseP(WitnessContext aStampContext, byte aProof[]) {
 		
 		// Sign on the proof first
 		byte[] sig = {};
@@ -182,23 +191,32 @@ public class StampMessage {
 		
 		byte[] epContent = MessageUtil.compileMessages(array);
 		
-		// Encrypt with CA's public key
-		byte[] epBytes = {};
+		
+		// Encrypt epContent with an AES key first
+		SecretKey aesKey = null;
+		byte[] epEncrypted = {};
+		byte[] keyEncrypted ={};
 		try {
-			epBytes = CryptoUtil.encryptRSA(aStampContext.getPubRSACA(), epContent);
+			aesKey = CryptoUtil.generateAESKey(128);
+			epEncrypted = CryptoUtil.encryptAES(aesKey, epContent);
+			keyEncrypted = CryptoUtil.encryptRSA(aStampContext.getPubRSACA(), aesKey.getEncoded());
+		} catch (NoSuchAlgorithmException e1) {
+			e1.printStackTrace();
 		} catch (InvalidKeyException e) {
+			e.printStackTrace();
+		} catch (NoSuchPaddingException e) {
 			e.printStackTrace();
 		} catch (IllegalBlockSizeException e) {
 			e.printStackTrace();
 		} catch (BadPaddingException e) {
 			e.printStackTrace();
-		} catch (NoSuchPaddingException e) {
-			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
 		}
 		
-		return epBytes;
+		ArrayList<byte[]> arrayOut = new ArrayList<byte[]>();
+		arrayOut.add(epEncrypted);
+		arrayOut.add(keyEncrypted);
+		
+		return MessageUtil.compileMessages(arrayOut);
 	}
 	
 	/**
