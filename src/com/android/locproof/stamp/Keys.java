@@ -37,14 +37,14 @@ public class Keys {
 
 		filePath = keyPath+"/keys/DSAPubKey"+DSA_SIZE;
 		MY_DSA_PUP_KEY = readKeyFile(filePath);
-		Log.d("KEYS", "DSAPUB: "+new String(MY_DSA_PUP_KEY)+" bytes: "+MY_DSA_PUP_KEY.length);
+		//Log.d("KEYS", "DSAPUB: "+new String(MY_DSA_PUP_KEY)+" bytes: "+MY_DSA_PUP_KEY.length);
 		
 		filePath = keyPath+"/keys/DSAPriKey"+DSA_SIZE;
 		MY_DSA_PRI_KEY = readKeyFile(filePath);
-		Log.d("KEYS", "DSAPRI: "+new String(MY_DSA_PRI_KEY)+" bytes: "+MY_DSA_PRI_KEY.length);
+		//Log.d("KEYS", "DSAPRI: "+new String(MY_DSA_PRI_KEY)+" bytes: "+MY_DSA_PRI_KEY.length);
 		
 		filePath = keyPath+"/keys/RSAPubKey"+RSA_SIZE;
 		CA_PUP_KEY = readKeyFile(filePath);
-		Log.d("KEYS", "CAKEY: "+new String(CA_PUP_KEY)+" bytes: "+CA_PUP_KEY.length);
+		//Log.d("KEYS", "CAKEY: "+new String(CA_PUP_KEY)+" bytes: "+CA_PUP_KEY.length);
 	}
 }
