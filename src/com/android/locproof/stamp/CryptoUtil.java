@@ -36,6 +36,8 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import android.util.Log;
+
 /**
  * @author Oscar
  *
@@ -386,7 +388,6 @@ public class CryptoUtil {
 			BigInteger c;
 			if (ek.testBit(i)){
 				c = (g.multiply(h.modPow(v, p))).mod(p);
-				// Unable to do BigInteger.pow(BigInteger), not sure about the mathematical requirement here
 			}else{
 				c = h.modPow(v, p);
 			}
@@ -412,6 +413,7 @@ public class CryptoUtil {
 			BigInteger exp = new BigInteger(1, ByteBuffer.allocate(8).putLong((long) Math.pow(2, i)).array());
 			
 			z = z.add((c1BI.multiply(c2BI)).modPow(exp, p));
+			Log.d("CeCk", "z calculation " + i + "/" + size + " round");
 		}
 		return z.mod(p);
 	}

@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 
 public abstract class BluetoothEntities {
 	/* Key for Bluetooth event data bundle */
@@ -56,6 +57,16 @@ public abstract class BluetoothEntities {
 	private MyLooper mLooper;
 	private int mSMState;
 	
+    // For data collection
+    protected int comOverhead = 0;
+    protected long requestTime;
+    protected long finishTime;
+    protected long dbStartTime;
+    protected long dbFinishTime;
+    
+    protected long ceckPrepStartTime;
+    protected long ceckPrepFinishTime;
+    
     /**
      * Constructor
      * @param aContext context of main activity
@@ -130,6 +141,27 @@ public abstract class BluetoothEntities {
         Message msg = mHandler.obtainMessage(StampProtocolActivity.UI_M_SMTRANSITION);
         Bundle bundle = new Bundle();
         bundle.putString(StampProtocolActivity.SM_TRANSITION, msgString);
+        msg.setData(bundle);
+        mHandler.sendMessage(msg);
+    }
+    
+    /**
+     * Send data log to UI
+     * @param epSize
+     * @param prover
+     */
+    public void printDataLog(int epSize, boolean prover){
+    	String msgString;
+    	if(prover){
+    		msgString = "Total Delay: " + (finishTime - requestTime) + " | CeCk Prep Time: " + (ceckPrepFinishTime - ceckPrepStartTime) + " |EP Size: " + epSize + " | Total Communication: " + comOverhead;
+    	}else{
+    		msgString = "DB Delay: " + (dbFinishTime - dbStartTime) + " | Total Communication: " + comOverhead;
+    	}
+
+    	/* Send log message back to the UI Activity */
+        Message msg = mHandler.obtainMessage(StampProtocolActivity.UI_M_DATALOG);
+        Bundle bundle = new Bundle();
+        bundle.putString(StampProtocolActivity.DATA_LOG, msgString);
         msg.setData(bundle);
         mHandler.sendMessage(msg);
     }

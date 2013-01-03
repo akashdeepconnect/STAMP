@@ -27,6 +27,7 @@ public class StampWitness extends BluetoothEntities{
     private Context mContext;
     private Handler mHandler;
     
+    
     /**
      * Constructor
      * @param aContext context of main activity
@@ -135,6 +136,7 @@ public class StampWitness extends BluetoothEntities{
 	    		switch(oldSMState){
 		    		case WITNESS_S_DB_START:
 		    			StampMessage.processCeCk(mStampContext, param.getByteArray(RCVD_MESSAGE));
+		    			dbFinishTime = System.currentTimeMillis();
 		    			sendMessage(MESSAGE_EP);
 		    			printTransition(oldSMState, newSMState, true, false);
 		    			break;
@@ -146,10 +148,15 @@ public class StampWitness extends BluetoothEntities{
 	    	case WITNESS_S_EP_SENT: 
 	    		switch(oldSMState){
 		    		case WITNESS_S_DB_SUCCESS:
+		    			// Log data
+		    			Log.i(TAG, "Total DB Time: " + (dbFinishTime - dbStartTime));
+		    			Log.i(TAG, "Total Communication: " + comOverhead);
+		    			
 		    			/* finished, back to listening */
 //		    			try{Thread.sleep(3000);}catch(InterruptedException e){e.printStackTrace();}
 //		    			addSMTask(new moveSM(WITNESS_S_LISTENING,null));
 		    			printTransition(oldSMState, newSMState, true, false);
+		    			printDataLog(0, false);
 		    			break;
 		    		default:
 		    			printTransition(oldSMState, newSMState, false, false);
@@ -167,13 +174,14 @@ public class StampWitness extends BluetoothEntities{
 	 * @param messageType type of message
 	 */
     private void sendMessage(byte messageType){
-    	byte mWriteBuf[];
+    	byte mWriteBuf[] ={};
     	byte header[] = {0x0A, 0x0B, messageType, 0x00, 0x00, 0x00, 0x00};
     	byte payload[] = null;
     	int size = 0;		// size cannot be that large can it? 
     	
     	switch(messageType){
     		case MESSAGE_DBSTART:
+    			dbStartTime = System.currentTimeMillis();
     			payload = StampMessage.createDBStart();
     			size = payload.length;
     			System.arraycopy(ByteBuffer.allocate(4).putInt(size).array(), 0, header, 3, 4);
@@ -194,6 +202,7 @@ public class StampWitness extends BluetoothEntities{
     		default:
     			break;
     	}
+    	comOverhead += mWriteBuf.length;
     	if(D){
 			Log.d(TAG, "Message "+messageType+": "+size+" bytes sent");
 			Log.d(TAG, new String(payload));
@@ -208,6 +217,7 @@ public class StampWitness extends BluetoothEntities{
     	String remote[] = aMessage.getString(REMOTE_DEVICE).split(";");
     	byte message[] = aMessage.getByteArray(RCVD_MESSAGE);
     	int remainSize = message.length;
+    	comOverhead += message.length;
     	
     	int msgStart = 0;
     	byte header[];
@@ -230,7 +240,7 @@ public class StampWitness extends BluetoothEntities{
     				packetSize = size;					// total payload size
     				if(bytesRcvd < size){
     					/* incomplete, save payload into assemble buffer */
-    					assembleBuffer = new byte[40960];
+    					assembleBuffer = new byte[163840];
     					bytesRead = 0;
     					System.arraycopy(message, msgStart, 
     							assembleBuffer, bytesRead, message.length);

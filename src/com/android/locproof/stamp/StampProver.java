@@ -34,7 +34,7 @@ public class StampProver extends BluetoothEntities{
     
     private Context mContext;
     private Handler mHandler;
-    
+        
     /**
      * Constructor
      * @param aContext context of main activity
@@ -182,10 +182,18 @@ public class StampProver extends BluetoothEntities{
 	    		switch(oldSMState){
 		    		case PROVER_S_DB_SUCCESS:
 		    			/* process EP */
-		    			StampMessage.processEP(mStampEPRecord, param.getByteArray(RCVD_MESSAGE));
+		    			StampMessage.processEP(mStampEPRecord, param.getByteArray(RCVD_MESSAGE));		    			
+		    			finishTime = System.currentTimeMillis();
+		    			
+		    			// Log data
+		    			Log.i(TAG, "Total Delay: " + (finishTime - requestTime));
+		    			Log.i(TAG, "Total Communication: " + comOverhead);
+		    			Log.i(TAG, "EP Size: " + param.getByteArray(RCVD_MESSAGE).length);
+		    			
 		    			/* successful? go back and check next witness */
 		    	    	addSMTask(new moveSM(PROVER_S_INQUIRY,null));
 		    			printTransition(oldSMState, newSMState, true, true);
+		    			printDataLog(param.getByteArray(RCVD_MESSAGE).length, true);
 		    			break;
 		    		default:
 		    			printTransition(oldSMState, newSMState, false, true);
@@ -233,7 +241,7 @@ public class StampProver extends BluetoothEntities{
 	 * @param messageType type of message
 	 */
     private void sendMessage(byte messageType){
-    	byte mWriteBuf[];
+    	byte mWriteBuf[] = {};
     	byte header[] = {0x0A, 0x0B, messageType, 0x00, 0x00, 0x00, 0x00};
     	byte payload[] = null;
     	int size = 0;		// size cannot be that large can it? 
@@ -247,9 +255,12 @@ public class StampProver extends BluetoothEntities{
     			System.arraycopy(payload, 0, mWriteBuf, header.length, size);
     			mProverBtService.write(mWriteBuf, MESSAGE_PREQ);
     			mStampEPRecord.setPreq(payload);
+    			requestTime = System.currentTimeMillis();
     			break;
     		case MESSAGE_CECK:
+    			ceckPrepStartTime = System.currentTimeMillis();
     			payload = StampMessage.createCeCk(mStampContext);
+    			ceckPrepFinishTime = System.currentTimeMillis();
     			size = payload.length;
     			System.arraycopy(ByteBuffer.allocate(4).putInt(size).array(), 0, header, 3, 4);
     			mWriteBuf = new byte[header.length + size];
@@ -260,6 +271,7 @@ public class StampProver extends BluetoothEntities{
     		default:
     			break;
     	}
+    	comOverhead += mWriteBuf.length;
     	if(D){
 			Log.d(TAG, "Message "+messageType+": "+size+" bytes sent");
 			Log.d(TAG, new String(payload));
@@ -274,6 +286,7 @@ public class StampProver extends BluetoothEntities{
     	String remote[] = aMessage.getString(REMOTE_DEVICE).split(";");
     	byte message[] = aMessage.getByteArray(RCVD_MESSAGE);
     	int remainSize = message.length;
+    	comOverhead += message.length;
     	
     	int msgStart = 0;
     	byte header[];

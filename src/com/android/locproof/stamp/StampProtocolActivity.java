@@ -33,11 +33,13 @@ public class StampProtocolActivity extends Activity {
     public static final String NEW_WITNESS = "new_witness";
     public static final String CONNECTION = "connection";
     public static final String MESSAGE = "message";
+    public static final String DATA_LOG = "data_log";
     
     public static final int UI_M_SMTRANSITION = 0;
     public static final int UI_M_WITNESSLIST = 1;
     public static final int UI_M_CONNECTION = 2;
     public static final int UI_M_RCVDMSG = 3;
+    public static final int UI_M_DATALOG = 4;
     
 	/* UI Layout Views */
     private MyClickListener mCListener;
@@ -252,6 +254,9 @@ public class StampProtocolActivity extends Activity {
 	                break;
 	            case UI_M_RCVDMSG:
 	            	putDebug("MESSAGE", msg.getData().getString(MESSAGE));
+	                break;
+	            case UI_M_DATALOG:
+	            	putDebug("DATALOG", msg.getData().getString(DATA_LOG));
 	                break;
 	        }
         }

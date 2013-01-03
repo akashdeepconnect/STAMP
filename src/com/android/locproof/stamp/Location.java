@@ -37,7 +37,7 @@ public class Location {
 		_levels.add("Town/City");
 		_levels.add("Region/County");
 		_levels.add("State");
-		_levels.add("County");
+		_levels.add("Country");
 	}
 
 	public String getLevel(int index){

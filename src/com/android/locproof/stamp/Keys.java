@@ -8,8 +8,8 @@ import android.util.Log;
 
 public class Keys {
 	
-	public static final String DSA_SIZE = "512";
-	public static final String RSA_SIZE = "1024";
+	public static final String DSA_SIZE = "768";
+	public static final String RSA_SIZE = "2048";
 	
 	public static byte[] MY_DSA_PUP_KEY;
 	public static byte[] MY_DSA_PRI_KEY;
